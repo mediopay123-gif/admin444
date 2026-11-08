@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RUDAAI AI Skills Shelf - Complete 3D Shelf Landing Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --rudaai-primary: #CC09E6;
+      --rudaai-purple: #7929D2;
+      --rudaai-deep: #32104C;
+      --rudaai-dark: #17111F;
+      --rudaai-card-bg: rgba(36, 23, 56, 0.75);
+      --rudaai-border: rgba(204, 9, 230, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--rudaai-dark);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(121, 41, 210, 0.3) 0%, transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(204, 9, 230, 0.2) 0%, transparent 50%),
+        linear-gradient(180deg, #17111F 0%, #120b19 100%);
+      color: #ffffff;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 3D Background Canvas */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    /* Main Container */
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 32px 24px 60px 24px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(121, 41, 210, 0.25);
+      border: 1px solid rgba(204, 9, 230, 0.4);
+      border-radius: 999px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #e9d5ff;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #CC09E6;
+      box-shadow: 0 0 10px #CC09E6;
+    }
+
+    .title {
+      font-size: clamp(28px, 4.5vw, 48px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 50%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: rgba(233, 213, 255, 0.8);
+      max-width: 640px;
+      margin: 0 auto;
+      letter-spacing: 0.05em;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 3D Shelf Structure */
+    .shelf-stage {
+      perspective: 1200px;
+      margin: 20px 0 40px 0;
+    }
+
+    .shelf-rack {
+      position: relative;
+      background: rgba(28, 17, 44, 0.7);
+      border: 1px solid rgba(204, 9, 230, 0.3);
+      border-radius: 28px;
+      padding: 36px 28px;
+      backdrop-filter: blur(20px);
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 40px rgba(121, 41, 210, 0.15);
+      transform-style: preserve-3d;
+    }
+
+    /* Shelf Plank (3D Depth Plate) */
+    .shelf-plank {
+      position: absolute;
+      bottom: -14px;
+      left: 14px;
+      right: 14px;
+      height: 14px;
+      background: linear-gradient(180deg, #32104C 0%, #17111F 100%);
+      border: 1px solid rgba(204, 9, 230, 0.4);
+      border-top: none;
+      border-radius: 0 0 14px 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    /* 7 Tools Grid */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    @media (min-width: 1024px) {
+      .tools-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .tool-card:last-child {
+        grid-column: span 2;
+      }
+    }
+
+    /* Tool Book/Card Item */
+    .tool-card {
+      position: relative;
+      background: linear-gradient(145deg, rgba(38, 22, 60, 0.85) 0%, rgba(23, 17, 31, 0.95) 100%);
+      border: 1px solid rgba(204, 9, 230, 0.25);
+      border-radius: 20px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform-style: preserve-3d;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 250px;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #CC09E6, transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-8px) rotateX(4deg) scale(1.02);
+      border-color: #CC09E6;
+      box-shadow: 
+        0 15px 35px rgba(204, 9, 230, 0.35),
+        0 0 20px rgba(121, 41, 210, 0.25);
+    }
+
+    .tool-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .tool-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #f472b6;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .tool-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(121, 41, 210, 0.3);
+      border: 1px solid rgba(204, 9, 230, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 15px rgba(121, 41, 210, 0.3);
+    }
+
+    .tool-name-en {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+
+    .tool-name-cn {
+      font-size: 12px;
+      color: #c084fc;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .tool-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .tool-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .tool-tag {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(121, 41, 210, 0.2);
+      border: 1px solid rgba(204, 9, 230, 0.25);
+      color: #e9d5ff;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid rgba(204, 9, 230, 0.2);
+    }
+
+    .explore-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      background: linear-gradient(90deg, #7929D2, #CC09E6);
+      padding: 6px 14px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .explore-btn:hover {
+      opacity: 0.9;
+    }
+
+    .tool-count {
+      font-size: 11px;
+      color: rgba(233, 213, 255, 0.6);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Shelf Footer Info */
+    .shelf-info-bar {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      background: rgba(36, 23, 56, 0.5);
+      border: 1px solid rgba(204, 9, 230, 0.2);
+      border-radius: 16px;
+      font-size: 12px;
+      color: rgba(233, 213, 255, 0.8);
+    }
+
+    .shelf-info-bar strong {
+      color: #ffffff;
+    }
+
+    .action-link {
+      color: #CC09E6;
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Three.js Ambient Particle Space -->
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        <span>SEVEN TOOLS · INFINITE POSSIBILITIES</span>
+      </div>
+      <h1 class="title">探索 RUDAAI 技能货架</h1>
+      <p class="subtitle">AI SKILLS SHELF · 汇集七大通用 AI 创造力基石</p>
+    </header>
+
+    <!-- 3D Shelf Stage -->
+    <div class="shelf-stage">
+      <div class="shelf-rack">
+        <div class="tools-grid" id="toolsGrid">
+          <!-- 1. AI Writing -->
+          <div class="tool-card" onclick="selectSkill('writing', 'AI Writing', '写作、文案、邮件、报告')">
+            <div class="card-top">
+              <span class="tool-id">TOOL_01 / WRITING</span>
+              <div class="tool-icon-wrap">✍️</div>
+            </div>
+            <div>
+              <div class="tool-name-en">AI Writing</div>
+              <div class="tool-name-cn">智能写作与文案创作</div>
+              <p class="tool-desc">全流程公文、跨境营销文案、学术研报与多语言商务邮件自动化输出。</p>
+              <div class="tool-tags">
+                <span class="tool-tag">深度润色</span>
+                <span class="tool-tag">多语言邮件</span>
+                <span class="tool-tag">爆款文案</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tool-count">48 位在架员工</span>
+              <button class="explore-btn">探索技能 →</button>
+            </div>
+          </div>
+
+          <!-- 2. AI Coding -->
+          <div class="tool-card" onclick="selectSkill('coding', 'AI Coding', '编程、网站、APP、数据库')">
+            <div class="card-top">
+              <span class="tool-id">TOOL_02 / CODING</span>
+              <div class="tool-icon-wrap">💻</div>
+            </div>
+            <div>
+              <div class="tool-name-en">AI Coding</div>
+              <div class="tool-name-cn">代码工程与全栈研发</div>
+              <p class="tool-desc">全栈应用构建、微服务架构设计、SQL索引穿透调优与自动化测试编写。</p>
+              <div class="tool-tags">
+                <span class="tool-tag">TypeScript</span>
+                <span class="tool-tag">SQL优化</span>
+                <span class="tool-tag">微服务</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tool-count">64 位在架员工</span>
+              <button class="explore-btn">探索技能 →</button>
+            </div>
+          </div>
+
+          <!-- 3. AI Design -->
+          <div class="tool-card" onclick="selectSkill('design', 'AI Design', '图片、LOGO、UI、3D')">
+            <div class="card-top">
+              <span class="tool-id">TOOL_03 / DESIGN</span>
+              <div class="tool-icon-wrap">🎨</div>
+            </div>
+            <div>
+              <div class="tool-name-en">AI Design</div>
+              <div class="tool-name-cn">视觉美学与立体设计</div>
+              <p class="tool-desc">高品质 3D 材质渲染、UI/UX 规范制定、品牌 VI 与商用插画即时生成。</p>
+              <div class="tool-tags">
+                <span class="tool-tag">3D材质</span>
+                <span class="tool-tag">UI组件库</span>
+                <span class="tool-tag">视觉Prompt</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tool-count">52 位在架员工</span>
+              <button class="explore-btn">探索技能 →</button>
+            </div>
+          </div>
+
+          <!-- 4. AI Video -->
+          <div class="tool-card" onclick="selectSkill('video', 'AI Video', '视频、剪辑、广告制作')">
+            <div class="card-top">
+              <span class="tool-id">TOOL_04 / VIDEO</span>
+              <div class="tool-icon-wrap">🎬</div>
+            </div>
+            <div>
+              <div class="tool-name-en">AI Video</div>
+              <div class="tool-name-cn">视频生成与广告剪辑</div>
+              <p class="tool-desc">电影级分镜绘制、商业短视频自动切片剪辑与 3D 摄像机视轨合成。</p>
+              <div class="tool-tags">
+                <span class="tool-tag">分镜脚本</span>
+                <span class="tool-tag">短视频切片</span>
+                <span class="tool-tag">广告渲染</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tool-count">36 位在架员工</span>
+              <button class="explore-btn">探索技能 →</button>
+            </div>
+          </div>
+
+          <!-- 5. AI Voice -->
+          <div class="tool-card" onclick="selectSkill('voice', 'AI Voice', '语音、配音、翻译')">
+            <div class="card-top">
+              <span class="tool-id">TOOL_05 / VOICE</span>
+              <div class="tool-icon-wrap">🎙️</div>
+            </div>
+            <div>
+              <div class="tool-name-en">AI Voice</div>
+              <div class="tool-name-cn">超拟真语音与同声传译</div>
+              <p class="tool-desc">多语种跨国母语级克隆、有声书情感演绎与全天候呼叫中心应答。</p>
+              <div class="tool-tags">
+                <span class="tool-tag">声音克隆</span>
+                <span class="tool-tag">同声翻译</span>
+                <span class="tool-tag">情感语调</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tool-count">29 位在架员工</span>
+              <button class="explore-btn">探索技能 →</button>
+            </div>
+          </div>
+
+          <!-- 6. AI Research -->
+          <div class="tool-card" onclick="selectSkill('research', 'AI Research', '搜索、研究、数据分析')">
+            <div class="card-top">
+              <span class="tool-id">TOOL_06 / RESEARCH</span>
+              <div class="tool-icon-wrap">🔬</div>
+            </div>
+            <div>
+              <div class="tool-name-en">AI Research</div>
+              <div class="tool-name-cn">全网穿透式研究与情报</div>
+              <p class="tool-desc">跨国专利审查、PubMed 生物医药综述提炼与资本财报深度穿透。</p>
+              <div class="tool-tags">
+                <span class="tool-tag">财报穿透</span>
+                <span class="tool-tag">文献梳理</span>
+                <span class="tool-tag">竞品图谱</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tool-count">41 位在架员工</span>
+              <button class="explore-btn">探索技能 →</button>
+            </div>
+          </div>
+
+          <!-- 7. AI Automation -->
+          <div class="tool-card" onclick="selectSkill('automation', 'AI Automation', '自动化、工作流、办公')">
+            <div class="card-top">
+              <span class="tool-id">TOOL_07 / AUTOMATION</span>
+              <div class="tool-icon-wrap">⚡</div>
+            </div>
+            <div>
+              <div class="tool-name-en">AI Automation</div>
+              <div class="tool-name-cn">智能工作流与跨系统自动化</div>
+              <p class="tool-desc">连通企业数据库、CRM、邮件与即时通讯软件，实现端到端无人值守运行。</p>
+              <div class="tool-tags">
+                <span class="tool-tag">无人值守</span>
+                <span class="tool-tag">多工具打通</span>
+                <span class="tool-tag">工作流编排</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tool-count">58 位在架员工</span>
+              <button class="explore-btn">探索技能 →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shelf Physical Wooden/Metal Plate -->
+        <div class="shelf-plank"></div>
+      </div>
+    </div>
+
+    <!-- Shelf Bottom Info Bar -->
+    <div class="shelf-info-bar">
+      <div>
+        <span>已联动 RUDAAI 24 行业超市 · </span>
+        <strong>点击任意技能卡片，即时筛选并查看支持该技能的 AI 员工商品</strong>
+      </div>
+      <div>
+        <span class="action-link" onclick="notifyParent('VIEW_ALL_EMPLOYEES', {})">进入全部货架 →</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Safe PostMessage Bridge to RUDAAI Platform
+    function selectSkill(skillKey, skillName, desc) {
+      notifyParent('SELECT_SKILL', {
+        skillKey: skillKey,
+        skillName: skillName,
+        desc: desc
+      });
+    }
+
+    function notifyParent(type, payload) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          source: 'RUDAAI_SKILLS_SHELF',
+          type: type,
+          payload: payload
+        }, '*');
+      }
+    }
+
+    // 3D Ambient Space Particle Canvas (Three.js)
+    (function init3DSpace() {
+      const canvas = document.getElementById('bg-canvas');
+      if (!canvas || !window.THREE) return;
+
+      const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.z = 15;
+
+      const pCount = 200;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(pCount * 3);
+      for (let i = 0; i < pCount; i++) {
+        pPos[i * 3] = (Math.random() - 0.5) * 40;
+        pPos[i * 3 + 1] = (Math.random() - 0.5) * 30;
+        pPos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+
+      const pMat = new THREE.PointsMaterial({
+        color: 0xCC09E6,
+        size: 0.15,
+        transparent: true,
+        opacity: 0.5,
+        blending: THREE.AdditiveBlending
+      });
+      const points = new THREE.Points(pGeo, pMat);
+      scene.add(points);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        points.rotation.y += 0.0008;
+        points.rotation.x += 0.0004;
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    })();
+  </script>
+</body>
+</html>

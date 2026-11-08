@@ -1,0 +1,6 @@
+{
+  "name": "RUDAAI - Super 3D AI Workforce Marketplace",
+  "description": "RUDAAI 超级 3D AI 员工超市与全栈业务平台：集购物前台、AI员工互动工作空间、运营控制中心、开发者平台于一体，24大行业AI员工与工具即买即用。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
